@@ -1,0 +1,850 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.wrap { padding: 1.5rem 0; }
+.slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; }
+.slider-label { font-size: 13px; color: var(--color-text-secondary); min-width: 80px; }
+.slider-val { font-size: 14px; font-weight: 500; color: var(--color-text-primary); min-width: 40px; text-align: right; }
+.metrics-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 1.25rem 0; }
+.mc { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 14px; text-align: center; }
+.mc-lbl { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 6px; }
+.mc-val { font-size: 26px; font-weight: 500; }
+.mc-sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 4px; }
+.bar-wrap { margin-bottom: 6px; }
+.bar-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.bar-track { height: 10px; background: var(--color-background-secondary); border-radius: 99px; overflow: hidden; border: 0.5px solid var(--color-border-tertiary); }
+.bar-fill { height: 100%; border-radius: 99px; transition: width 0.2s ease; }
+.verdict { border-radius: var(--border-radius-md); padding: 12px 16px; font-size: 13.5px; line-height: 1.7; margin: 1rem 0; transition: background 0.3s; }
+.verdict-title { font-size: 12px; font-weight: 500; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+.divider { border: none; border-top: 0.5px solid var(--color-border-tertiary); margin: 1.25rem 0; }
+.case-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 1rem; }
+.case-btn { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 12px 14px; cursor: pointer; text-align: left; transition: border-color 0.15s; }
+.case-btn:hover { border-color: var(--color-border-info); }
+.case-btn.active { border: 2px solid #378ADD; }
+.case-name { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
+.case-desc { font-size: 12px; color: var(--color-text-tertiary); line-height: 1.5; }
+.arith-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--color-text-secondary); margin-top: 6px; }
+.arith-val { font-size: 15px; font-weight: 500; }
+.compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.compare-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; text-align: center; }
+.compare-lbl { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.compare-val { font-size: 18px; font-weight: 500; }
+
+/* 상황 판단 기준표 */
+.judge-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 6px; }
+.judge-hint { font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 12px; border-left: 2.5px solid var(--color-border-info); padding-left: 10px; line-height: 1.6; }
+.judge-table { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.judge-row { display: grid; grid-template-columns: 150px 1fr 160px; gap: 10px; align-items: center; background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 12px 14px; transition: border-color 0.25s, box-shadow 0.25s; }
+.judge-row.active { border: 1.5px solid #378ADD; box-shadow: 0 0 0 3px rgba(55,138,221,0.10); }
+.judge-badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 99px; line-height: 1.4; text-align: center; }
+.j-red { background: #FCEBEB; color: #791F1F; border: 0.5px solid #F09595; }
+.j-amber { background: #FAEEDA; color: #633806; border: 0.5px solid #FAC775; }
+.j-green { background: #EAF3DE; color: #27500A; border: 0.5px solid #97C459; }
+.j-blue { background: #E6F1FB; color: #0C447C; border: 0.5px solid #85B7EB; }
+.judge-verdict-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
+.judge-verdict-desc { font-size: 12px; color: var(--color-text-secondary); line-height: 1.55; }
+.judge-ex-tag { font-size: 11px; padding: 5px 10px; border-radius: var(--border-radius-md); line-height: 1.5; display: inline-block; text-align: center; }
+.judge-highlight { background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 10px 14px; font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; text-align: center; transition: background 0.3s; }
+@media (max-width: 520px) {
+  .judge-row { grid-template-columns: 1fr; }
+  .judge-cell-ex { display: none; }
+}
+
+/* 탭 섹션 */
+.tab-section-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 6px; }
+.tab-hint { font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 12px; border-left: 2.5px solid var(--color-border-info); padding-left: 10px; line-height: 1.6; }
+.tab-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 0; }
+.tab-btn { background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-bottom: none; border-radius: 8px 8px 0 0; padding: 8px 14px; font-size: 12px; font-weight: 500; color: var(--color-text-secondary); cursor: pointer; line-height: 1.4; text-align: center; transition: background 0.15s, color 0.15s; min-width: 72px; }
+.tab-btn span { font-size: 10px; font-weight: 400; display: block; }
+.tab-btn:hover { background: var(--color-background-primary); color: var(--color-text-primary); }
+.tab-btn.active { background: var(--color-background-primary); color: var(--color-text-primary); border-color: var(--color-border-secondary); border-bottom: 2px solid var(--color-background-primary); z-index: 1; }
+.tab-btn-summary { border-color: #A99CE8; }
+.tab-btn-summary.active { border-color: #A99CE8; }
+.tab-panel { display: none; background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: 0 8px 8px 8px; overflow: hidden; }
+.tab-panel.active { display: block; }
+.tp-header { padding: 14px 16px; border-bottom: 0.5px solid; }
+.tp-model-name { font-size: 15px; font-weight: 500; margin-bottom: 3px; }
+.tp-model-desc { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 8px; }
+.tp-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.tp-badge { font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 99px; }
+.tp-body { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+.tp-left { padding: 14px 16px; border-right: 0.5px solid var(--color-border-tertiary); }
+.tp-right { padding: 14px 16px; }
+.cm-label { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+.cm-wrap { overflow-x: auto; }
+table.cm { border-collapse: collapse; font-size: 12px; }
+table.cm th, table.cm td { border: 0.5px solid var(--color-border-secondary); padding: 8px 12px; text-align: center; vertical-align: middle; }
+.cm-corner { background: transparent; border: none !important; }
+.cm-head { background: #E6F1FB; color: #0C447C; font-weight: 500; font-size: 11px; }
+.cm-side { background: #E6F1FB; color: #0C447C; font-weight: 500; font-size: 11px; writing-mode: vertical-rl; text-orientation: mixed; padding: 10px 6px !important; }
+.cm-tp { background: #EAF3DE; color: #3B6D11; font-size: 18px; font-weight: 500; }
+.cm-fn { background: #FCEBEB; color: #A32D2D; font-size: 18px; font-weight: 500; }
+.cm-fp { background: #FCEBEB; color: #A32D2D; font-size: 18px; font-weight: 500; }
+.cm-tn { background: #EAF3DE; color: #3B6D11; font-size: 18px; font-weight: 500; }
+.cm-sub { font-size: 10px; display: block; font-weight: 400; margin-top: 2px; }
+.calc-block { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; margin-bottom: 8px; border: 0.5px solid var(--color-border-tertiary); }
+.calc-title { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 5px; }
+.calc-formula { font-family: var(--font-mono); font-size: 12px; color: var(--color-text-secondary); margin-bottom: 3px; }
+.calc-step { font-family: var(--font-mono); font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 2px; }
+.calc-result { font-family: var(--font-mono); font-size: 15px; font-weight: 500; margin-top: 4px; }
+.calc-insight { border-radius: var(--border-radius-md); padding: 9px 12px; font-size: 12px; line-height: 1.6; border: 0.5px solid; margin-top: 4px; }
+
+/* 전체 비교표 */
+.summary-table { border-collapse: collapse; font-size: 12px; width: 100%; min-width: 560px; }
+.summary-table th, .summary-table td { border: 0.5px solid var(--color-border-secondary); padding: 9px 12px; text-align: center; vertical-align: middle; }
+.summary-table thead th { background: #E6F1FB; color: #0C447C; font-weight: 500; }
+.summary-table .s-name { text-align: left; font-weight: 500; font-size: 12px; line-height: 1.4; }
+.s-recall { background: rgba(99,153,34,0.06); }
+.s-precision { background: rgba(24,95,165,0.06); }
+.s-f1 { background: rgba(83,74,183,0.08); }
+.s-good { color: #3B6D11; font-weight: 500; }
+.s-best { color: #1A5E0A; font-weight: 700; background: #D4EDBA !important; }
+.s-warn { color: #854F0B; font-weight: 500; }
+.s-danger { color: #A32D2D; font-weight: 500; }
+.s-bad { color: #A32D2D; }
+.s-tag { font-size: 11px; padding: 3px 8px; border-radius: 99px; white-space: nowrap; }
+
+@media (max-width: 560px) {
+  .tp-body { grid-template-columns: 1fr; }
+  .tp-left { border-right: none; border-bottom: 0.5px solid var(--color-border-tertiary); }
+}
+</style>
+
+<div class="wrap">
+
+  <div style="font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 1rem;">대표 시나리오를 선택하거나 슬라이더를 직접 조정해 보세요.</div>
+
+  <div class="case-grid" id="caseGrid">
+    <button class="case-btn" onclick="setCase(1.0,0.01,'covid')">
+      <div class="case-name"><i class="ti ti-virus" aria-hidden="true" style="font-size:14px;margin-right:4px;"></i>코로나 무조건 양성</div>
+      <div class="case-desc">재현율 100%, 정밀도 1%<br>1000명 전원 코로나 판정</div>
+    </button>
+    <button class="case-btn" onclick="setCase(0.60,0.86,'cancer')">
+      <div class="case-name"><i class="ti ti-stethoscope" aria-hidden="true" style="font-size:14px;margin-right:4px;"></i>암 진단 모델 A</div>
+      <div class="case-desc">재현율 60%, 정밀도 86%<br>앞서 다룬 암 진단 사례</div>
+    </button>
+    <button class="case-btn" onclick="setCase(0.84,0.70,'cancerB')">
+      <div class="case-name"><i class="ti ti-stethoscope" aria-hidden="true" style="font-size:14px;margin-right:4px;"></i>암 진단 모델 B</div>
+      <div class="case-desc">재현율 84%, 정밀도 70%<br>재현율 개선 버전</div>
+    </button>
+    <button class="case-btn" onclick="setCase(0.90,0.90,'balanced')">
+      <div class="case-name"><i class="ti ti-checks" aria-hidden="true" style="font-size:14px;margin-right:4px;"></i>균형 잡힌 모델</div>
+      <div class="case-desc">재현율 90%, 정밀도 90%<br>두 지표가 모두 높은 이상적 모델</div>
+    </button>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="slider-row">
+    <span class="slider-label">재현율</span>
+    <input type="range" min="0" max="100" step="1" id="recallSlider" style="flex:1;" oninput="updateAll()">
+    <span class="slider-val" id="recallOut">60%</span>
+  </div>
+  <div class="slider-row">
+    <span class="slider-label">정밀도</span>
+    <input type="range" min="0" max="100" step="1" id="precisionSlider" style="flex:1;" oninput="updateAll()">
+    <span class="slider-val" id="precisionOut">86%</span>
+  </div>
+
+  <div class="metrics-row">
+    <div class="mc">
+      <div class="mc-lbl">재현율</div>
+      <div class="mc-val" id="recallVal" style="color:#3B6D11;">0.60</div>
+      <div class="mc-sub">FN 최소화</div>
+    </div>
+    <div class="mc">
+      <div class="mc-lbl">정밀도</div>
+      <div class="mc-val" id="precisionVal" style="color:#185FA5;">0.86</div>
+      <div class="mc-sub">FP 최소화</div>
+    </div>
+    <div class="mc">
+      <div class="mc-lbl">F1 Score</div>
+      <div class="mc-val" id="f1Val">0.71</div>
+      <div class="mc-sub">균형 지표</div>
+    </div>
+  </div>
+
+  <div class="bar-wrap">
+    <div class="bar-label"><span>재현율</span><span id="recallPct">60%</span></div>
+    <div class="bar-track"><div class="bar-fill" id="recallBar" style="width:60%;background:#639922;"></div></div>
+  </div>
+  <div class="bar-wrap">
+    <div class="bar-label"><span>정밀도</span><span id="precisionPct">86%</span></div>
+    <div class="bar-track"><div class="bar-fill" id="precisionBar" style="width:86%;background:#185FA5;"></div></div>
+  </div>
+  <div class="bar-wrap" style="margin-top:8px;">
+    <div class="bar-label"><span style="font-weight:500;">F1 Score</span><span id="f1Pct">71%</span></div>
+    <div class="bar-track" style="height:14px;"><div class="bar-fill" id="f1Bar" style="width:71%;background:#534AB7;"></div></div>
+  </div>
+
+  <div class="compare-row">
+    <div class="compare-card">
+      <div class="compare-lbl">산술평균 <span style="font-size:10px;">(단순 평균)</span></div>
+      <div class="compare-val" id="arithVal">0.73</div>
+      <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:3px;">(재현율 + 정밀도) ÷ 2</div>
+    </div>
+    <div class="compare-card">
+      <div class="compare-lbl">F1 Score <span style="font-size:10px;">(조화평균)</span></div>
+      <div class="compare-val" id="harmVal" style="color:#534AB7;">0.71</div>
+      <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:3px;">2 × P × R ÷ (P + R)</div>
+    </div>
+  </div>
+
+  <div class="verdict" id="verdict" style="margin-top:1rem;">
+    <div class="verdict-title" id="verdictTitle"></div>
+    <div id="verdictBody"></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 상황 판단 기준표 -->
+  <div class="judge-title">상황별 판단 기준</div>
+  <div class="judge-hint">슬라이더를 조정하며 아래 표의 어느 경우에 해당하는지 확인해 보세요.</div>
+
+  <div class="judge-table">
+
+    <div class="judge-row" id="j1">
+      <div class="judge-cell-situation">
+        <div class="judge-badge j-red">F1 낮음 + 격차 큼</div>
+      </div>
+      <div class="judge-cell-verdict">
+        <div class="judge-verdict-title">모델 조정 필요</div>
+        <div class="judge-verdict-desc">한쪽 지표가 무너진 상태입니다. 임계값 조정, 오버샘플링 등 즉각적인 처치가 필요합니다.</div>
+      </div>
+      <div class="judge-cell-ex">
+        <span class="judge-ex-tag" style="background:#FCEBEB;color:#791F1F;">예: 코로나 전원 양성<br>재현율 1.00 / 정밀도 0.01</span>
+      </div>
+    </div>
+
+    <div class="judge-row" id="j2">
+      <div class="judge-cell-situation">
+        <div class="judge-badge j-amber">F1 낮음 + 격차 작음</div>
+      </div>
+      <div class="judge-cell-verdict">
+        <div class="judge-verdict-title">전체 성능 부족</div>
+        <div class="judge-verdict-desc">두 지표가 균형은 맞지만 둘 다 낮습니다. 데이터 추가 수집 또는 모델 구조 자체를 개선해야 합니다.</div>
+      </div>
+      <div class="judge-cell-ex">
+        <span class="judge-ex-tag" style="background:#FAEEDA;color:#633806;">예: 재현율 0.40<br>정밀도 0.42</span>
+      </div>
+    </div>
+
+    <div class="judge-row" id="j3">
+      <div class="judge-cell-situation">
+        <div class="judge-badge j-green">F1 높음 + 격차 작음</div>
+      </div>
+      <div class="judge-cell-verdict">
+        <div class="judge-verdict-title">균형 잡힌 좋은 모델</div>
+        <div class="judge-verdict-desc">재현율과 정밀도가 고르게 높아 F1도 높습니다. 대부분의 도메인에서 신뢰할 수 있는 모델입니다.</div>
+      </div>
+      <div class="judge-cell-ex">
+        <span class="judge-ex-tag" style="background:#EAF3DE;color:#27500A;">예: 재현율 0.90<br>정밀도 0.90</span>
+      </div>
+    </div>
+
+    <div class="judge-row" id="j4">
+      <div class="judge-cell-situation">
+        <div class="judge-badge j-blue">F1 높음 + 격차 큼</div>
+      </div>
+      <div class="judge-cell-verdict">
+        <div class="judge-verdict-title">도메인 맥락 확인 필요</div>
+        <div class="judge-verdict-desc">의도적으로 한 지표를 높인 경우일 수 있습니다. 암 진단처럼 재현율을 의도적으로 높인 상황이라면 정상적인 설계입니다.</div>
+      </div>
+      <div class="judge-cell-ex">
+        <span class="judge-ex-tag" style="background:#E6F1FB;color:#0C447C;">예: 암 진단 모델 B<br>재현율 0.84 / 정밀도 0.70</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="judge-highlight" id="judgeHighlight">
+    슬라이더를 조정하면 현재 상황이 표시됩니다.
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 도메인 맥락 섹션 -->
+  <div class="judge-title">도메인 맥락별 지표 선택 기준</div>
+  <div class="judge-hint">같은 F1이라도 도메인마다 FN·FP의 위험 비용이 다릅니다. 어떤 오류가 더 치명적인지에 따라 우선 지표를 결정하세요.</div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:1.5rem;">
+
+    <div class="card" style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1.25rem;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:#FCEBEB;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="ti ti-stethoscope" style="color:#A32D2D;font-size:18px;" aria-hidden="true"></i>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:500;color:var(--color-text-primary);">암·코로나 진단</div>
+          <div style="font-size:12px;color:var(--color-text-tertiary);margin-top:2px;">의료 분야</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+        <span class="judge-badge j-red">FN이 치명적</span>
+        <span class="judge-badge" style="background:#F1EFE8;color:#444441;border:0.5px solid #ccc;">소수 클래스</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div style="background:#FCEBEB;color:#791F1F;border:0.5px solid #F09595;border-radius:var(--border-radius-md);padding:8px 10px;font-size:12px;line-height:1.55;">
+          <div style="font-size:10px;font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.8;">FN (미탐) — 심각</div>
+          환자를 정상으로 판정 → 치료 시기 놓침 → 생명 위협
+        </div>
+        <div style="background:#EAF3DE;color:#27500A;border:0.5px solid #97C459;border-radius:var(--border-radius-md);padding:8px 10px;font-size:12px;line-height:1.55;">
+          <div style="font-size:10px;font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.8;">FP (오탐) — 감수 가능</div>
+          정상인을 환자로 판정 → 추가 검사로 정정 가능
+        </div>
+      </div>
+      <div style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:4px 10px;border-radius:99px;background:#EAF3DE;color:#27500A;">
+        <i class="ti ti-arrow-up" aria-hidden="true"></i> 재현율 우선
+      </div>
+    </div>
+
+    <div class="card" style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1.25rem;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:#FAEEDA;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="ti ti-mail" style="color:#854F0B;font-size:18px;" aria-hidden="true"></i>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:500;color:var(--color-text-primary);">스팸 메일 필터</div>
+          <div style="font-size:12px;color:var(--color-text-tertiary);margin-top:2px;">이메일 서비스</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+        <span class="judge-badge j-amber">FP가 더 위험</span>
+        <span class="judge-badge" style="background:#F1EFE8;color:#444441;border:0.5px solid #ccc;">일상적 서비스</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div style="background:#EAF3DE;color:#27500A;border:0.5px solid #97C459;border-radius:var(--border-radius-md);padding:8px 10px;font-size:12px;line-height:1.55;">
+          <div style="font-size:10px;font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.8;">FN (미탐) — 감수 가능</div>
+          스팸을 정상으로 판정 → 스팸 메일 한 통 받는 정도
+        </div>
+        <div style="background:#FAEEDA;color:#633806;border:0.5px solid #FAC775;border-radius:var(--border-radius-md);padding:8px 10px;font-size:12px;line-height:1.55;">
+          <div style="font-size:10px;font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.8;">FP (오탐) — 심각</div>
+          중요한 메일이 스팸함으로 → 계약·면접 기회 놓침
+        </div>
+      </div>
+      <div style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:4px 10px;border-radius:99px;background:#E6F1FB;color:#0C447C;">
+        <i class="ti ti-arrow-up" aria-hidden="true"></i> 정밀도 우선
+      </div>
+    </div>
+
+    <div class="card" style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1.25rem;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:#FAEEDA;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="ti ti-credit-card" style="color:#854F0B;font-size:18px;" aria-hidden="true"></i>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:500;color:var(--color-text-primary);">금융 사기 탐지</div>
+          <div style="font-size:12px;color:var(--color-text-tertiary);margin-top:2px;">핀테크·은행</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+        <span class="judge-badge j-red">FN이 치명적</span>
+        <span class="judge-badge j-amber">FP도 비용 발생</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div style="background:#FCEBEB;color:#791F1F;border:0.5px solid #F09595;border-radius:var(--border-radius-md);padding:8px 10px;font-size:12px;line-height:1.55;">
+          <div style="font-size:10px;font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.8;">FN (미탐) — 심각</div>
+          사기 거래를 정상으로 판정 → 금전 피해 발생
+        </div>
+        <div style="background:#FAEEDA;color:#633806;border:0.5px solid #FAC775;border-radius:var(--border-radius-md);padding:8px 10px;font-size:12px;line-height:1.55;">
+          <div style="font-size:10px;font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.8;">FP (오탐) — 비용</div>
+          정상 거래를 차단 → 고객 불편, 민원 발생
+        </div>
+      </div>
+      <div style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:4px 10px;border-radius:99px;background:#EEEDFE;color:#3C3489;">
+        <i class="ti ti-scale" aria-hidden="true"></i> F1 균형 중시
+      </div>
+    </div>
+
+    <div class="card" style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1.25rem;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:#E6F1FB;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="ti ti-search" style="color:#185FA5;font-size:18px;" aria-hidden="true"></i>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:500;color:var(--color-text-primary);">추천 시스템</div>
+          <div style="font-size:12px;color:var(--color-text-tertiary);margin-top:2px;">쇼핑·콘텐츠</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+        <span class="judge-badge j-blue">FP가 더 위험</span>
+        <span class="judge-badge" style="background:#F1EFE8;color:#444441;border:0.5px solid #ccc;">사용자 경험</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div style="background:#EAF3DE;color:#27500A;border:0.5px solid #97C459;border-radius:var(--border-radius-md);padding:8px 10px;font-size:12px;line-height:1.55;">
+          <div style="font-size:10px;font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.8;">FN (미탐) — 감수 가능</div>
+          좋아할 상품을 못 보여줌 → 기회 손실 정도
+        </div>
+        <div style="background:#FAEEDA;color:#633806;border:0.5px solid #FAC775;border-radius:var(--border-radius-md);padding:8px 10px;font-size:12px;line-height:1.55;">
+          <div style="font-size:10px;font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.8;">FP (오탐) — 심각</div>
+          관심 없는 상품을 계속 추천 → 사용자 이탈
+        </div>
+      </div>
+      <div style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:4px 10px;border-radius:99px;background:#E6F1FB;color:#0C447C;">
+        <i class="ti ti-arrow-up" aria-hidden="true"></i> 정밀도 우선
+      </div>
+    </div>
+
+  </div>
+
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:1.25rem 1.5rem;margin-bottom:1.5rem;">
+    <div style="font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:12px;">도메인 맥락 판단 3단계</div>
+    <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--color-text-secondary);line-height:1.65;margin-bottom:8px;">
+      <span style="font-size:15px;flex-shrink:0;margin-top:1px;color:var(--color-text-info);"><i class="ti ti-number-1" aria-hidden="true"></i></span>
+      <span><strong style="color:var(--color-text-primary);">FN vs FP — 어느 오류가 더 치명적인가?</strong><br>FN이 치명적 → 재현율 우선 / FP가 치명적 → 정밀도 우선</span>
+    </div>
+    <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--color-text-secondary);line-height:1.65;margin-bottom:8px;">
+      <span style="font-size:15px;flex-shrink:0;margin-top:1px;color:var(--color-text-info);"><i class="ti ti-number-2" aria-hidden="true"></i></span>
+      <span><strong style="color:var(--color-text-primary);">데이터 불균형이 심한가?</strong><br>소수 클래스가 1~5%면 정확도는 무의미, F1이 필수</span>
+    </div>
+    <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--color-text-secondary);line-height:1.65;">
+      <span style="font-size:15px;flex-shrink:0;margin-top:1px;color:var(--color-text-info);"><i class="ti ti-number-3" aria-hidden="true"></i></span>
+      <span><strong style="color:var(--color-text-primary);">오류의 비용을 금전·인명으로 환산해보기</strong><br>인명 피해 > 금전 피해 > 불편 순으로 FN/FP 가중치 결정</span>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 탭 섹션: 혼돈행렬 + 지표 계산 -->
+  <div class="tab-section-title">모델별 혼돈 행렬 &amp; 지표 계산</div>
+  <div class="tab-hint">각 탭을 클릭하면 혼돈 행렬, 계산 과정, 비교표를 확인할 수 있습니다.</div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab(0)">🦠 코로나<br><span>무조건 양성</span></button>
+    <button class="tab-btn" onclick="switchTab(1)">🔬 암 진단<br><span>모델 A</span></button>
+    <button class="tab-btn" onclick="switchTab(2)">🔬 암 진단<br><span>모델 B</span></button>
+    <button class="tab-btn" onclick="switchTab(3)">✅ 균형<br><span>잡힌 모델</span></button>
+    <button class="tab-btn tab-btn-summary" onclick="switchTab(4)">📊 전체<br><span>비교표</span></button>
+  </div>
+
+  <!-- TAB 0: 코로나 무조건 양성 -->
+  <div class="tab-panel active" id="tab0">
+    <div class="tp-header" style="background:#FFF0F0;border-color:#F09595;">
+      <div class="tp-model-name" style="color:#791F1F;">🦠 코로나 무조건 양성 모델</div>
+      <div class="tp-model-desc">1000명 전원을 코로나(Positive)로 판정한 극단적 모델</div>
+      <div class="tp-badges">
+        <span class="tp-badge" style="background:#FCEBEB;color:#791F1F;">TP=10</span>
+        <span class="tp-badge" style="background:#FCEBEB;color:#791F1F;">FN=0</span>
+        <span class="tp-badge" style="background:#FCEBEB;color:#791F1F;">FP=990</span>
+        <span class="tp-badge" style="background:#EAF3DE;color:#27500A;">TN=0</span>
+      </div>
+    </div>
+    <div class="tp-body">
+      <div class="tp-left">
+        <div class="cm-label">혼돈 행렬</div>
+        <div class="cm-wrap">
+          <table class="cm">
+            <thead>
+              <tr><th class="cm-corner" colspan="2" rowspan="2"></th><th class="cm-head" colspan="2">예측 (Predicted)</th></tr>
+              <tr><th class="cm-head">Positive</th><th class="cm-head">Negative</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th class="cm-side" rowspan="2">실제</th>
+                <th class="cm-head">Positive</th>
+                <td class="cm-tp">10<span class="cm-sub">TP</span></td>
+                <td class="cm-fn">0<span class="cm-sub">FN</span></td>
+              </tr>
+              <tr>
+                <th class="cm-head">Negative</th>
+                <td class="cm-fp">990<span class="cm-sub">FP</span></td>
+                <td class="cm-tn">0<span class="cm-sub">TN</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tp-right">
+        <div class="cm-label">계산 과정</div>
+        <div class="calc-block">
+          <div class="calc-title" style="color:#639922;">재현율 (Recall)</div>
+          <div class="calc-formula">= TP / (TP + FN)</div>
+          <div class="calc-step">= 10 / (10 + 0) = 10 / 10</div>
+          <div class="calc-result" style="color:#639922;">= 1.00 (100%)</div>
+        </div>
+        <div class="calc-block">
+          <div class="calc-title" style="color:#185FA5;">정밀도 (Precision)</div>
+          <div class="calc-formula">= TP / (TP + FP)</div>
+          <div class="calc-step">= 10 / (10 + 990) = 10 / 1000</div>
+          <div class="calc-result" style="color:#A32D2D;">= 0.01 (1%)</div>
+        </div>
+        <div class="calc-block">
+          <div class="calc-title" style="color:#534AB7;">F1 Score</div>
+          <div class="calc-formula">= 2 × (P × R) / (P + R)</div>
+          <div class="calc-step">= 2 × (0.01 × 1.00) / (0.01 + 1.00)</div>
+          <div class="calc-step">= 0.02 / 1.01</div>
+          <div class="calc-result" style="color:#A32D2D;">≈ 0.02 (2%)</div>
+        </div>
+        <div class="calc-insight" style="background:#FCEBEB;color:#791F1F;border-color:#F09595;">
+          재현율 100%는 의미 없는 완벽함. 정밀도 1%가 F1을 0.02로 끌어내림. 완전히 무용지물인 모델.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 1: 암 진단 모델 A -->
+  <div class="tab-panel" id="tab1">
+    <div class="tp-header" style="background:#FFF7F0;border-color:#FAC775;">
+      <div class="tp-model-name" style="color:#633806;">🔬 암 진단 모델 A</div>
+      <div class="tp-model-desc">재현율보다 정밀도가 높은 상태 — 암 환자를 많이 놓치는 모델</div>
+      <div class="tp-badges">
+        <span class="tp-badge" style="background:#EAF3DE;color:#27500A;">TP=30</span>
+        <span class="tp-badge" style="background:#FCEBEB;color:#791F1F;">FN=20</span>
+        <span class="tp-badge" style="background:#FCEBEB;color:#791F1F;">FP=5</span>
+        <span class="tp-badge" style="background:#EAF3DE;color:#27500A;">TN=45</span>
+      </div>
+    </div>
+    <div class="tp-body">
+      <div class="tp-left">
+        <div class="cm-label">혼돈 행렬 (총 100명)</div>
+        <div class="cm-wrap">
+          <table class="cm">
+            <thead>
+              <tr><th class="cm-corner" colspan="2" rowspan="2"></th><th class="cm-head" colspan="2">예측 (Predicted)</th></tr>
+              <tr><th class="cm-head">Positive</th><th class="cm-head">Negative</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th class="cm-side" rowspan="2">실제</th>
+                <th class="cm-head">Positive</th>
+                <td class="cm-tp">30<span class="cm-sub">TP</span></td>
+                <td class="cm-fn">20<span class="cm-sub">FN</span></td>
+              </tr>
+              <tr>
+                <th class="cm-head">Negative</th>
+                <td class="cm-fp">5<span class="cm-sub">FP</span></td>
+                <td class="cm-tn">45<span class="cm-sub">TN</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tp-right">
+        <div class="cm-label">계산 과정</div>
+        <div class="calc-block">
+          <div class="calc-title" style="color:#639922;">재현율 (Recall)</div>
+          <div class="calc-formula">= TP / (TP + FN)</div>
+          <div class="calc-step">= 30 / (30 + 20) = 30 / 50</div>
+          <div class="calc-result" style="color:#A32D2D;">= 0.60 (60%)</div>
+        </div>
+        <div class="calc-block">
+          <div class="calc-title" style="color:#185FA5;">정밀도 (Precision)</div>
+          <div class="calc-formula">= TP / (TP + FP)</div>
+          <div class="calc-step">= 30 / (30 + 5) = 30 / 35</div>
+          <div class="calc-result" style="color:#639922;">≈ 0.86 (86%)</div>
+        </div>
+        <div class="calc-block">
+          <div class="calc-title" style="color:#534AB7;">F1 Score</div>
+          <div class="calc-formula">= 2 × (P × R) / (P + R)</div>
+          <div class="calc-step">= 2 × (0.86 × 0.60) / (0.86 + 0.60)</div>
+          <div class="calc-step">= 1.032 / 1.46</div>
+          <div class="calc-result" style="color:#633806;">≈ 0.71 (71%)</div>
+        </div>
+        <div class="calc-insight" style="background:#FAEEDA;color:#633806;border-color:#FAC775;">
+          정밀도(0.86)가 재현율(0.60)보다 높지만, 암 진단에서 FN=20은 치명적. 재현율 개선이 시급한 상태.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: 암 진단 모델 B -->
+  <div class="tab-panel" id="tab2">
+    <div class="tp-header" style="background:#F0F8FF;border-color:#85B7EB;">
+      <div class="tp-model-name" style="color:#0C447C;">🔬 암 진단 모델 B</div>
+      <div class="tp-model-desc">임계값 조정으로 재현율을 높인 개선 모델</div>
+      <div class="tp-badges">
+        <span class="tp-badge" style="background:#EAF3DE;color:#27500A;">TP=42</span>
+        <span class="tp-badge" style="background:#FCEBEB;color:#791F1F;">FN=8</span>
+        <span class="tp-badge" style="background:#FCEBEB;color:#791F1F;">FP=18</span>
+        <span class="tp-badge" style="background:#EAF3DE;color:#27500A;">TN=32</span>
+      </div>
+    </div>
+    <div class="tp-body">
+      <div class="tp-left">
+        <div class="cm-label">혼돈 행렬 (총 100명)</div>
+        <div class="cm-wrap">
+          <table class="cm">
+            <thead>
+              <tr><th class="cm-corner" colspan="2" rowspan="2"></th><th class="cm-head" colspan="2">예측 (Predicted)</th></tr>
+              <tr><th class="cm-head">Positive</th><th class="cm-head">Negative</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th class="cm-side" rowspan="2">실제</th>
+                <th class="cm-head">Positive</th>
+                <td class="cm-tp">42<span class="cm-sub">TP</span></td>
+                <td class="cm-fn">8<span class="cm-sub">FN</span></td>
+              </tr>
+              <tr>
+                <th class="cm-head">Negative</th>
+                <td class="cm-fp">18<span class="cm-sub">FP</span></td>
+                <td class="cm-tn">32<span class="cm-sub">TN</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tp-right">
+        <div class="cm-label">계산 과정</div>
+        <div class="calc-block">
+          <div class="calc-title" style="color:#639922;">재현율 (Recall)</div>
+          <div class="calc-formula">= TP / (TP + FN)</div>
+          <div class="calc-step">= 42 / (42 + 8) = 42 / 50</div>
+          <div class="calc-result" style="color:#639922;">= 0.84 (84%)</div>
+        </div>
+        <div class="calc-block">
+          <div class="calc-title" style="color:#185FA5;">정밀도 (Precision)</div>
+          <div class="calc-formula">= TP / (TP + FP)</div>
+          <div class="calc-step">= 42 / (42 + 18) = 42 / 60</div>
+          <div class="calc-result" style="color:#633806;">= 0.70 (70%)</div>
+        </div>
+        <div class="calc-block">
+          <div class="calc-title" style="color:#534AB7;">F1 Score</div>
+          <div class="calc-formula">= 2 × (P × R) / (P + R)</div>
+          <div class="calc-step">= 2 × (0.70 × 0.84) / (0.70 + 0.84)</div>
+          <div class="calc-step">= 1.176 / 1.54</div>
+          <div class="calc-result" style="color:#639922;">≈ 0.76 (76%)</div>
+        </div>
+        <div class="calc-insight" style="background:#E6F1FB;color:#0C447C;border-color:#85B7EB;">
+          모델 A 대비 재현율 0.60→0.84로 상승. FP가 늘었지만 암 진단에서는 감수할 트레이드오프. F1도 0.71→0.76으로 개선.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: 균형 잡힌 모델 -->
+  <div class="tab-panel" id="tab3">
+    <div class="tp-header" style="background:#F0FBF0;border-color:#97C459;">
+      <div class="tp-model-name" style="color:#27500A;">✅ 균형 잡힌 모델</div>
+      <div class="tp-model-desc">재현율과 정밀도가 모두 높은 이상적인 모델</div>
+      <div class="tp-badges">
+        <span class="tp-badge" style="background:#EAF3DE;color:#27500A;">TP=45</span>
+        <span class="tp-badge" style="background:#FCEBEB;color:#791F1F;">FN=5</span>
+        <span class="tp-badge" style="background:#FCEBEB;color:#791F1F;">FP=5</span>
+        <span class="tp-badge" style="background:#EAF3DE;color:#27500A;">TN=45</span>
+      </div>
+    </div>
+    <div class="tp-body">
+      <div class="tp-left">
+        <div class="cm-label">혼돈 행렬 (총 100명)</div>
+        <div class="cm-wrap">
+          <table class="cm">
+            <thead>
+              <tr><th class="cm-corner" colspan="2" rowspan="2"></th><th class="cm-head" colspan="2">예측 (Predicted)</th></tr>
+              <tr><th class="cm-head">Positive</th><th class="cm-head">Negative</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th class="cm-side" rowspan="2">실제</th>
+                <th class="cm-head">Positive</th>
+                <td class="cm-tp">45<span class="cm-sub">TP</span></td>
+                <td class="cm-fn">5<span class="cm-sub">FN</span></td>
+              </tr>
+              <tr>
+                <th class="cm-head">Negative</th>
+                <td class="cm-fp">5<span class="cm-sub">FP</span></td>
+                <td class="cm-tn">45<span class="cm-sub">TN</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tp-right">
+        <div class="cm-label">계산 과정</div>
+        <div class="calc-block">
+          <div class="calc-title" style="color:#639922;">재현율 (Recall)</div>
+          <div class="calc-formula">= TP / (TP + FN)</div>
+          <div class="calc-step">= 45 / (45 + 5) = 45 / 50</div>
+          <div class="calc-result" style="color:#639922;">= 0.90 (90%)</div>
+        </div>
+        <div class="calc-block">
+          <div class="calc-title" style="color:#185FA5;">정밀도 (Precision)</div>
+          <div class="calc-formula">= TP / (TP + FP)</div>
+          <div class="calc-step">= 45 / (45 + 5) = 45 / 50</div>
+          <div class="calc-result" style="color:#639922;">= 0.90 (90%)</div>
+        </div>
+        <div class="calc-block">
+          <div class="calc-title" style="color:#534AB7;">F1 Score</div>
+          <div class="calc-formula">= 2 × (P × R) / (P + R)</div>
+          <div class="calc-step">= 2 × (0.90 × 0.90) / (0.90 + 0.90)</div>
+          <div class="calc-step">= 1.62 / 1.80</div>
+          <div class="calc-result" style="color:#639922;">= 0.90 (90%)</div>
+        </div>
+        <div class="calc-insight" style="background:#EAF3DE;color:#27500A;border-color:#97C459;">
+          재현율 = 정밀도 = F1 = 0.90. 두 값이 같을 때 산술평균과 조화평균이 일치하는 유일한 케이스.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: 전체 비교표 -->
+  <div class="tab-panel" id="tab4">
+    <div class="tp-header" style="background:#F4F0FF;border-color:#A99CE8;">
+      <div class="tp-model-name" style="color:#3C3489;">📊 4개 모델 전체 비교</div>
+      <div class="tp-model-desc">혼돈 행렬 수치와 3개 지표를 한 눈에 비교</div>
+    </div>
+    <div style="overflow-x:auto;padding:1rem 0;">
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>모델</th>
+            <th>TP</th><th>FN</th><th>FP</th><th>TN</th>
+            <th class="s-recall">재현율</th>
+            <th class="s-precision">정밀도</th>
+            <th class="s-f1">F1 Score</th>
+            <th>판정</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="s-name">🦠 코로나<br>무조건 양성</td>
+            <td>10</td><td class="s-bad">0</td><td class="s-bad">990</td><td class="s-bad">0</td>
+            <td class="s-recall s-good">1.00</td>
+            <td class="s-precision s-danger">0.01</td>
+            <td class="s-f1 s-danger">0.02</td>
+            <td><span class="s-tag" style="background:#FCEBEB;color:#791F1F;">모델 조정 필요</span></td>
+          </tr>
+          <tr>
+            <td class="s-name">🔬 암 진단<br>모델 A</td>
+            <td>30</td><td class="s-bad">20</td><td>5</td><td>45</td>
+            <td class="s-recall s-warn">0.60</td>
+            <td class="s-precision s-good">0.86</td>
+            <td class="s-f1 s-warn">0.71</td>
+            <td><span class="s-tag" style="background:#FAEEDA;color:#633806;">재현율 개선 필요</span></td>
+          </tr>
+          <tr>
+            <td class="s-name">🔬 암 진단<br>모델 B</td>
+            <td>42</td><td>8</td><td class="s-warn">18</td><td>32</td>
+            <td class="s-recall s-good">0.84</td>
+            <td class="s-precision s-warn">0.70</td>
+            <td class="s-f1 s-good">0.76</td>
+            <td><span class="s-tag" style="background:#E6F1FB;color:#0C447C;">도메인상 적합</span></td>
+          </tr>
+          <tr>
+            <td class="s-name">✅ 균형<br>잡힌 모델</td>
+            <td>45</td><td>5</td><td>5</td><td>45</td>
+            <td class="s-recall s-best">0.90</td>
+            <td class="s-precision s-best">0.90</td>
+            <td class="s-f1 s-best">0.90</td>
+            <td><span class="s-tag" style="background:#EAF3DE;color:#27500A;">이상적 모델</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="font-size:12px;color:var(--color-text-tertiary);margin-top:4px;line-height:1.6;padding:0 0.5rem;">
+      ※ 코로나 모델은 총 1000명 기준, 나머지 3개 모델은 총 100명 기준입니다.
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;padding:0 0.25rem;">
+      <span style="font-size:11px;display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#EAF3DE;display:inline-block;"></span>우수</span>
+      <span style="font-size:11px;display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#2E8B1A;display:inline-block;"></span>최우수</span>
+      <span style="font-size:11px;display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#FAEEDA;display:inline-block;"></span>주의</span>
+      <span style="font-size:11px;display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#FCEBEB;display:inline-block;"></span>위험</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function setCase(r, p, id) {
+  document.getElementById('recallSlider').value = Math.round(r * 100);
+  document.getElementById('precisionSlider').value = Math.round(p * 100);
+  document.querySelectorAll('.case-btn').forEach(b => b.classList.remove('active'));
+  updateAll();
+}
+
+function updateAll() {
+  const r = parseInt(document.getElementById('recallSlider').value) / 100;
+  const p = parseInt(document.getElementById('precisionSlider').value) / 100;
+  const f1 = (r + p === 0) ? 0 : 2 * r * p / (r + p);
+  const arith = (r + p) / 2;
+
+  document.getElementById('recallOut').textContent = Math.round(r * 100) + '%';
+  document.getElementById('precisionOut').textContent = Math.round(p * 100) + '%';
+  document.getElementById('recallVal').textContent = r.toFixed(2);
+  document.getElementById('precisionVal').textContent = p.toFixed(2);
+  document.getElementById('f1Val').textContent = f1.toFixed(2);
+  document.getElementById('recallPct').textContent = Math.round(r * 100) + '%';
+  document.getElementById('precisionPct').textContent = Math.round(p * 100) + '%';
+  document.getElementById('f1Pct').textContent = Math.round(f1 * 100) + '%';
+  document.getElementById('recallBar').style.width = Math.round(r * 100) + '%';
+  document.getElementById('precisionBar').style.width = Math.round(p * 100) + '%';
+  document.getElementById('f1Bar').style.width = Math.round(f1 * 100) + '%';
+  document.getElementById('arithVal').textContent = arith.toFixed(2);
+  document.getElementById('harmVal').textContent = f1.toFixed(2);
+
+  const diff = arith - f1;
+  const v = document.getElementById('verdict');
+  const vt = document.getElementById('verdictTitle');
+  const vb = document.getElementById('verdictBody');
+  const gap = Math.abs(r - p);
+
+  if (gap > 0.5) {
+    v.style.background = '#FCEBEB';
+    v.style.border = '0.5px solid #F09595';
+    vt.style.color = '#791F1F';
+    vt.textContent = '두 지표 격차가 너무 큽니다';
+    vb.style.color = '#791F1F';
+    vb.textContent = '산술평균(' + arith.toFixed(2) + ')과 F1(' + f1.toFixed(2) + ')의 차이가 ' + diff.toFixed(2) + '이나 납니다. F1이 낮은 쪽을 당겨 내려 진짜 성능을 드러냅니다. 한 지표만 높다고 좋은 모델이 아닙니다.';
+  } else if (f1 >= 0.75) {
+    v.style.background = '#EAF3DE';
+    v.style.border = '0.5px solid #97C459';
+    vt.style.color = '#27500A';
+    vt.textContent = '균형 잡힌 모델입니다';
+    vb.style.color = '#27500A';
+    vb.textContent = '재현율과 정밀도가 고르게 높아 F1(' + f1.toFixed(2) + ')도 높습니다. 산술평균(' + arith.toFixed(2) + ')과의 차이(' + diff.toFixed(2) + ')도 작아, 두 지표가 함께 잘 작동하고 있음을 확인할 수 있습니다.';
+  } else {
+    v.style.background = '#FAEEDA';
+    v.style.border = '0.5px solid #FAC775';
+    vt.style.color = '#633806';
+    vt.textContent = '개선이 필요합니다';
+    vb.style.color = '#633806';
+    vb.textContent = 'F1(' + f1.toFixed(2) + ')이 보통 수준입니다. 산술평균(' + arith.toFixed(2) + ')보다 ' + diff.toFixed(2) + ' 낮게 나왔습니다. 낮은 쪽 지표를 끌어올리는 것이 모델 개선의 핵심입니다.';
+  }
+
+  // 상황 판단 기준표 하이라이트
+  const isHighF1 = f1 >= 0.65;
+  const isBigGap = gap > 0.2;
+  const rows = ['j1','j2','j3','j4'];
+  rows.forEach(id => document.getElementById(id).classList.remove('active'));
+
+  const hl = document.getElementById('judgeHighlight');
+  let activeRow = '';
+
+  if (!isHighF1 && isBigGap) {
+    activeRow = 'j1';
+    hl.style.background = '#FCEBEB';
+    hl.style.color = '#791F1F';
+    hl.style.border = '0.5px solid #F09595';
+    hl.textContent = '현재 상황: F1 낮음 + 격차 큼 → 모델 조정이 필요합니다. 임계값 조정 또는 데이터 불균형 해소를 검토하세요.';
+  } else if (!isHighF1 && !isBigGap) {
+    activeRow = 'j2';
+    hl.style.background = '#FAEEDA';
+    hl.style.color = '#633806';
+    hl.style.border = '0.5px solid #FAC775';
+    hl.textContent = '현재 상황: F1 낮음 + 격차 작음 → 전체 성능이 부족합니다. 데이터 추가 수집 또는 모델 구조 개선이 필요합니다.';
+  } else if (isHighF1 && !isBigGap) {
+    activeRow = 'j3';
+    hl.style.background = '#EAF3DE';
+    hl.style.color = '#27500A';
+    hl.style.border = '0.5px solid #97C459';
+    hl.textContent = '현재 상황: F1 높음 + 격차 작음 → 균형 잡힌 좋은 모델입니다. 대부분의 도메인에서 신뢰할 수 있습니다.';
+  } else {
+    activeRow = 'j4';
+    hl.style.background = '#E6F1FB';
+    hl.style.color = '#0C447C';
+    hl.style.border = '0.5px solid #85B7EB';
+    hl.textContent = '현재 상황: F1 높음 + 격차 큼 → 도메인 맥락을 확인하세요. 암 진단처럼 재현율을 의도적으로 높인 경우라면 정상적인 설계입니다.';
+  }
+  if (activeRow) document.getElementById(activeRow).classList.add('active');
+}
+
+document.getElementById('recallSlider').value = 60;
+document.getElementById('precisionSlider').value = 86;
+updateAll();
+
+function switchTab(idx) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+  document.querySelectorAll('.tab-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+}
+</script>
